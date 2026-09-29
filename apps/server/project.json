@@ -1,0 +1,21 @@
+{
+  "name": "server",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/server/src",
+  "projectType": "application",
+  "tags": ["scope:backend", "type:agent-server"],
+  "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsx watch apps/server/src/main.ts"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p apps/server/tsconfig.app.json"
+      }
+    }
+  }
+}
