@@ -241,39 +241,15 @@ export class ConnectFourEngine implements GameEngine<ConnectFourState, ConnectFo
   }
 
   formatStateForPrompt(state: ConnectFourState): string {
-    const symbolMap = { player: 'X', ai: 'O', null: '.' };
+    const symbolMap = { player: 'X', ai: 'O' };
     const rows = state.board.map((row, r) => {
-      const formatted = row.map((cell) => (cell ? symbolMap[cell] : '.')).join('  ');
-      return `Row ${r} (${r === 0 ? 'top' : r === 5 ? 'floor' : '   '}):  | ${formatted} |`;
+      const formatted = row.map((cell) => (cell ? symbolMap[cell] : '.')).join(' ');
+      return `Row ${r}: ${formatted}${r === 0 ? '   (top)' : r === CONNECT_FOUR_ROWS - 1 ? '   (bottom)' : ''}`;
     });
 
-    const validMoves = this.getValidMoves(state);
-    const landingCoordLines = validMoves.map((m) => {
-      let landingRow = -1;
-      for (let r = CONNECT_FOUR_ROWS - 1; r >= 0; r--) {
-        if (state.board[r][m.col] === null) {
-          landingRow = r;
-          break;
-        }
-      }
-      return `  - Column ${m.col}: disc will drop into [Row ${landingRow}, Col ${m.col}]${m.col === 3 ? ' (Center Column)' : ''}`;
-    }).join('\n');
-
-    return `Connect Four Board (6 rows x 7 cols | Human=X, AI=O, Empty=.) :
-Columns:      0   1   2   3   4   5   6
------------------------------------------
-${rows.join('\n')}
------------------------------------------
-Current Turn: ${state.currentTurn === 'player' ? 'Human (X)' : 'AI (O)'}
-
-Gravity Mechanics (Where pieces will land if played now):
-${landingCoordLines}
-
-Board Geometry Reference:
-- Horizontal win: 4 of same symbol in row r, e.g. [r, c], [r, c+1], [r, c+2], [r, c+3]
-- Vertical win: 4 of same symbol in column c, e.g. [r, c], [r+1, c], [r+2, c], [r+3, c]
-- Diagonal down-right (\\): [r, c], [r+1, c+1], [r+2, c+2], [r+3, c+3]
-- Diagonal up-right (/): [r, c], [r-1, c+1], [r-2, c+2], [r-3, c+3]`;
+    return `Board (X = human, O = you, . = empty):
+Col:   0 1 2 3 4 5 6
+${rows.join('\n')}`;
   }
 
   getHeuristicMove(state: ConnectFourState, player: PlayerId, difficulty: DifficultyLevel): ConnectFourMove {

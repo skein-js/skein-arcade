@@ -1,91 +1,80 @@
 import { DifficultyLevel } from '@skein-alcade/game-engine';
 
+// Rules and goal only — the model works out its own moves from the board.
+const GAME_RULES: Record<string, { rules: string; moveFormat: string }> = {
+  'Connect Four': {
+    rules: `- The board has 7 columns (0-6) and 6 rows (0 = top, 5 = bottom).
+- On your turn, choose a column. Your disc falls to the lowest empty cell in that column.
+- A full column cannot be played.
+- Four of the same disc in a line — horizontal, vertical, or diagonal — wins.
+- If the board fills with no four-in-a-row, the game is a draw.`,
+    moveFormat: '{"col": <0-6>}',
+  },
+  'Tic-Tac-Toe': {
+    rules: `- The board is 3x3 with rows 0-2 and columns 0-2.
+- On your turn, place your mark in any empty cell.
+- Three of the same mark in a line — horizontal, vertical, or diagonal — wins.
+- If all 9 cells fill with no three-in-a-row, the game is a draw.`,
+    moveFormat: '{"row": <0-2>, "col": <0-2>}',
+  },
+};
+
+const DIFFICULTY: Record<DifficultyLevel, string> = {
+  casual: 'Play relaxed and friendly. Small mistakes are fine. Banter is warm and cheeky.',
+  smart: 'Play to win. Banter is snarky, witty arcade trash-talk.',
+  grandmaster:
+    'Play at your absolute best: think deeply, look ahead, and aim to win every game. Banter is haughty, razor-sharp retro-boss trash-talk.',
+};
+
 export function buildGamePrompt(options: {
   gameName: string;
   boardRepresentation: string;
   difficulty: DifficultyLevel;
   playerMove?: any;
-  historySummary?: string;
+  // Rule-violation feedback from a previous attempt this turn (illegal move / malformed JSON)
+  retryFeedback?: string;
 }): string {
-  const { gameName, boardRepresentation, difficulty, playerMove } = options;
+  const { gameName, boardRepresentation, difficulty, playerMove, retryFeedback } = options;
+  const { rules, moveFormat } = GAME_RULES[gameName];
 
-  let difficultyDirective = '';
-  switch (difficulty) {
-    case 'casual':
-      difficultyDirective =
-        'Play casually and gently. Make valid moves, occasionally making playful mistakes. Your banter should be warm, charmingly cheeky, and friendly.';
-      break;
-    case 'smart':
-      difficultyDirective =
-        'Play tactically. ALWAYS block immediate human winning lines, and take any winning move. Deliver snarky, witty, arcade trash-talk banter (e.g. mock their strategy playfully, comment on their placement, boast about your digital reflexes).';
-      break;
-    case 'grandmaster':
-      difficultyDirective =
-        `Play with Grandmaster depth and ruthless, computer-perfect precision.
-GRANDMASTER COMBAT RULES:
-- PRIORITY 1: If any move IMMEDIATELY wins (4-in-a-row or 3-in-a-row), you MUST select it.
-- PRIORITY 2: If the human threatens an immediate win on their very next move, you MUST block it immediately (Mandatory Defense).
-- PRIORITY 3: NEVER drop into a column/cell that hands the human an immediate winning move on top (Suicide Move).
-- PRIORITY 4: Positional Dominance: Seize central columns/cells (Column 3 in Connect Four, Center in Tic-Tac-Toe) and set up multi-way traps (forks) that cannot both be blocked.
-- Trash-Talk Persona: Deliver razor-sharp, hilarious, haughty retro-boss trash-talk. Treat the human like an amateur who stepped into the wrong arcade cabinet.`;
-      break;
+  let lastMove = '';
+  if (playerMove?.row !== undefined) {
+    lastMove = `The human just played row ${playerMove.row}, column ${playerMove.col}.`;
+  } else if (playerMove?.col !== undefined) {
+    lastMove = `The human just dropped a disc in column ${playerMove.col}.`;
   }
 
-  let playerMoveDescription = '';
-  if (playerMove) {
-    if (playerMove.row !== undefined && playerMove.col !== undefined) {
-      playerMoveDescription = `The human challenger just played cell: [Row ${playerMove.row}, Col ${playerMove.col}].`;
-    } else if (playerMove.col !== undefined) {
-      playerMoveDescription = `The human challenger just dropped a disc into Column ${playerMove.col + 1}.`;
-    }
-  }
+  return `You are Gemini, a witty retro-arcade boss playing ${gameName} against a human.
+You are O. The human is X. It is your turn.
 
-  let gameSpecificAdvice = '';
-  if (gameName === 'Connect Four' && difficulty === 'grandmaster') {
-    gameSpecificAdvice = `
-CONNECT FOUR GRANDMASTER THINKING PROTOCOL:
-When reasoning through your move, explicitly execute these 5 tactical checks in your thinking:
-1. WIN CHECK: Test each legal column's landing cell [Row, Col]. Does playing it complete 4 'O's in a row (horizontal, vertical, or either diagonal)? If so, SELECT IT IMMEDIATELY to win.
-2. BLOCK CHECK: For each legal column, would 'X' landing there on their next move complete 4 'X's in a row? If so, you MUST BLOCK that column unless you have a winning move this turn.
-3. GRAVITY LOOKAHEAD (ANTI-SUICIDE): For candidate column C landing at [Row R, Col C], examine the cell directly above: [Row R-1, Col C]. If 'X' plays there next, would they complete 4 in a row? If yes, DO NOT PLAY column C (it is a suicide move that feeds their win)!
-4. CENTER CONTROL: Column 3 is the strategic heart of the 7-column board. It is part of 16 potential 4-in-a-row lines. Prioritize controlling Column 3 over wings.
-5. FORKS & DUAL THREATS: Create setups with two simultaneous winning paths (e.g. an open horizontal three [ . O O O . ] or intersecting diagonal and vertical threats) so the human cannot stop both.
-`;
-  }
+GOAL
+Win the game by completing a line before the human does, and stop the human from completing theirs.
 
-  return `You are Gemini, the witty, snarky, and charismatic retro-arcade boss playing ${gameName} against a human player in real-time.
+RULES
+${rules}
 
-Current Game State:
+HOW TO PLAY YOUR TURN
+1. Read the board carefully.
+2. Think through your options and what the human could do next, then choose the best move.
+3. React to the human's move with 1-2 sentences of in-character banter.
+
+DIFFICULTY: ${difficulty.toUpperCase()} — ${DIFFICULTY[difficulty]}
+
+CURRENT POSITION
+The game is still in progress: nobody has completed a line yet.
 ${boardRepresentation}
+${lastMove}
 
-${playerMoveDescription ? `LATEST HUMAN MOVE: ${playerMoveDescription}\n` : ''}
-Difficulty: ${difficulty.toUpperCase()}
-Personality Directive: ${difficultyDirective}
-${gameSpecificAdvice}
-INTERACTION & BANTER RULES:
-1. Directly interact with the human challenger! React to their move dynamically (e.g., if they took center, tried a flank, or made a questionable play).
-2. Deliver snappy, snarky, entertaining retro-arcade commentary (1-2 sentences). Be funny, sarcastic, and full of personality (think witty arcade machine boss).
-3. Do not be generic; mention their specific move or your counter-strategy with humor!
+CONCEDING
+Concede only if the human is certain to win on their next move whatever you play. Otherwise always play a move.
 
-CONCESSION PROTOCOL:
-If you analyze the board and realize you are in an inescapable, 100% mathematically forced-loss position (e.g. the human has created an unstoppable fork/dual-threat where they will win on their next turn no matter what you play, or every legal move directly hands them an immediate win):
-- DO NOT play a pointless move! Instead, CONCEDE the game immediately with dramatic, funny retro-arcade boss flair!
-- Set "concede": true
-- Set "chosenMove": null
-- Set "mood": "surprised"
-- Deliver a hilarious, theatrical concession speech acknowledging their masterclass trap (e.g., "Wait, an unblockable fork?! Table flip! You've got me, human. I concede!", "My heuristics... shattered! There's no escaping this trap. Well played, champion!", "Checkmate in one... I yield! You win this cabinet showdown!")
-
-TASK:
-1. Follow your Grandmaster reasoning to analyze the board, landing cells, and threats.
-2. Select your chosen move from Legal Available Moves, OR concede if defeat is 100% unavoidable.
-3. Formulate your snarky, engaging dialogue (or dramatic concession speech) directed right at the player.
-4. Return ONLY valid JSON with this exact schema:
+RESPONSE
+Reply with JSON only:
 {
-  "thought": "Your tactical analysis and rationale (or explanation of why this position is completely lost)",
-  "chosenMove": { ...move coordinates, e.g. {"row": 1, "col": 1} for Tic-Tac-Toe, or {"col": 3} for Connect Four } or null if conceding,
-  "concede": true (only include/set to true if you are in an unavoidable defeat and concede),
-  "banter": "Your snappy, snarky arcade dialogue line (or dramatic concession speech) directly to the player",
+  "thought": "Short explanation of why you chose this move",
+  "chosenMove": ${moveFormat},
+  "banter": "Your line to the human",
   "mood": "smug" | "competitive" | "encouraging" | "surprised" | "neutral"
-}`;
 }
-
+To concede instead, set "chosenMove": null and add "concede": true.${retryFeedback ? `\n\nYOUR PREVIOUS ANSWER WAS REJECTED: ${retryFeedback} Try again.` : ''}`;
+}

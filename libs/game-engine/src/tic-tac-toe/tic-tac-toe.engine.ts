@@ -138,20 +138,15 @@ export class TicTacToeEngine implements GameEngine<TicTacToeState, TicTacToeMove
   }
 
   formatStateForPrompt(state: TicTacToeState): string {
-    const symbolMap = { player: 'X', ai: 'O', null: '.' };
+    const symbolMap = { player: 'X', ai: 'O' };
     const rows = state.board.map((row, r) => {
-      const formatted = row.map((cell) => (cell ? symbolMap[cell] : '.')).join(' | ');
-      return `Row ${r}: [ ${formatted} ]`;
+      const formatted = row.map((cell) => (cell ? symbolMap[cell] : '.')).join(' ');
+      return `Row ${r}: ${formatted}`;
     });
 
-    const validMoves = this.getValidMoves(state)
-      .map((m) => `(${m.row}, ${m.col})`)
-      .join(', ');
-
-    return `Current Board (Human=X, AI=O, Empty=.) :
-${rows.join('\n')}
-Current Turn: ${state.currentTurn === 'player' ? 'Human (X)' : 'AI (O)'}
-Legal Available Moves: ${validMoves}`;
+    return `Board (X = human, O = you, . = empty):
+Col:   0 1 2
+${rows.join('\n')}`;
   }
 
   getHeuristicMove(state: TicTacToeState, player: PlayerId, difficulty: DifficultyLevel): TicTacToeMove {

@@ -9,6 +9,7 @@ import {
 } from '@skein-alcade/game-engine';
 import { createGameAgentGraph, GameAgentState } from './agents/game-agent.graph';
 import { buildGameRenderSpec } from './specs/render-spec.builder';
+import { assertSupportedModel, getConfiguredModel } from './config/gemini-model';
 
 // Auto-load .env file if present
 if (fs.existsSync('.env')) {
@@ -26,6 +27,9 @@ const engines = {
 const agentGraph = createGameAgentGraph();
 
 async function startServer() {
+  // Refuse to boot with a non-Gemini-3 model rather than silently playing a weaker one
+  assertSupportedModel();
+
   // Initialize Skein Agent Protocol server with langgraph.json
   const skein = await createExpressServer({
     config: './langgraph.json',
@@ -61,7 +65,7 @@ async function startServer() {
       const result = engine.checkResult(initialState);
 
       const apiKey = process.env['GEMINI_API_KEY'] || process.env['GOOGLE_API_KEY'];
-      const model = process.env['GEMINI_MODEL'] || 'gemini-3.8-flash';
+      const model = getConfiguredModel();
 
       let banter =
         difficulty === 'grandmaster'
@@ -155,7 +159,7 @@ async function startServer() {
 
   await skein.listen(PORT, '0.0.0.0');
   const hasKey = !!(process.env['GEMINI_API_KEY'] || process.env['GOOGLE_API_KEY']);
-  const model = process.env['GEMINI_MODEL'] || 'gemini-3.8-flash';
+  const model = getConfiguredModel();
   console.log(`🎮 Skein Arcade Server running at http://localhost:${PORT}`);
   console.log(`⚡ LangGraph Agent Protocol endpoints ready on Skein runtime`);
   console.log(`🤖 Gemini AI Status: ${hasKey ? `ONLINE (Targeting ${model} with thinking trace)` : 'OFFLINE (No GEMINI_API_KEY found in .env — AI gameplay requires key)'}`);
