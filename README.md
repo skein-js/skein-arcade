@@ -3,7 +3,7 @@
 > **Generative UI Arcade Platform** powered by **[skein-js](https://skein-js.github.io/skein-js/)**, **LangGraph**, **Google Gemini 3**, **[@langchain/angular](https://reference.langchain.com/javascript/langchain-angular)**, and **Angular (`@ng-json-render/core`)**.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg?logo=typescript)](https://www.typescriptlang.org/)
-[![Angular](https://img.shields.io/badge/Angular-19-dd0031.svg?logo=angular)](https://angular.dev/)
+[![Angular](https://img.shields.io/badge/Angular-22-dd0031.svg?logo=angular)](https://angular.dev/)
 [![LangChain Angular](https://img.shields.io/badge/@langchain/angular-Stream_SDK-green.svg)](https://reference.langchain.com/javascript/langchain-angular)
 [![LangGraph](https://img.shields.io/badge/LangGraph-Agent_Workflow-orange.svg)](https://langchain-ai.github.io/langgraph/)
 [![skein-js](https://img.shields.io/badge/skein--js-Agent_Runtime-purple.svg)](https://skein-js.github.io/skein-js/)
@@ -46,7 +46,7 @@
 ```text
 skein-arcade/
 ├── apps/
-│   ├── web/                           # Angular 19+ Frontend (Signals, Zoneless, Tailwind CSS)
+│   ├── web/                           # Angular 22+ Frontend (Signals, Zoneless, Tailwind CSS)
 │   │   ├── src/app/
 │   │   │   ├── catalog/               # Custom @ng-json-render catalog components
 │   │   │   │   ├── arcade-board.component.ts        # Interactive board with optimistic feedback

@@ -26,7 +26,7 @@ Welcome to **Skein Arcade** (`@skein-alcade/source`), an educational, AI-powered
 
 ### Stack
 - **Monorepo**: Nx 23+ with pnpm.
-- **Frontend**: Angular 19+ (standalone components, Signals, zoneless change detection, modern control flow `@if`/`@for`).
+- **Frontend**: Angular 22+ (standalone components, Signals, zoneless change detection, modern control flow `@if`/`@for`).
 - **UI Framework**: `@ng-json-render/core`, `@json-render/core`, Tailwind CSS.
 - **Agent Orchestration**: `skein-js`, `@langchain/langgraph`, `@langchain/core`.
 - **LLM**: Google Gemini (`@google/genai` or `@langchain/google-genai`).
