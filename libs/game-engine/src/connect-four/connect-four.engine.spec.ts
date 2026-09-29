@@ -76,3 +76,66 @@ test('ConnectFourEngine - smart heuristic blocks opponent vertical win', () => {
   const move = engine.getHeuristicMove(state, 'ai', 'smart');
   assert.equal(move.col, 4);
 });
+
+test('ConnectFourEngine - tactical analysis identifies landing rows, threats, and wins', () => {
+  const engine = new ConnectFourEngine();
+  let state = engine.getInitialState();
+
+  // Create horizontal setup for AI in row 5: cols 0, 1, 2
+  state = engine.applyMove(state, { col: 0 }, 'player'); // Player col 0, row 5
+  state = engine.applyMove(state, { col: 1 }, 'ai');     // AI col 1, row 5
+  state = engine.applyMove(state, { col: 0 }, 'player'); // Player col 0, row 4
+  state = engine.applyMove(state, { col: 2 }, 'ai');     // AI col 2, row 5
+  state = engine.applyMove(state, { col: 0 }, 'player'); // Player col 0, row 3
+  state = engine.applyMove(state, { col: 3 }, 'ai');     // AI col 3, row 5 (AI now has cols 1, 2, 3 in row 5)
+
+  // Player's turn
+  const playerAnalysis = engine.getTacticalAnalysis(state, 'player');
+  // AI threatens to win on col 4 at row 5!
+  assert.ok(playerAnalysis.opponentWinningThreats.includes(4));
+
+  // AI's perspective
+  const aiAnalysis = engine.getTacticalAnalysis(state, 'ai');
+  assert.ok(aiAnalysis.immediateWins.includes(4));
+});
+
+test('ConnectFourEngine - grandmaster mode avoids suicide moves', () => {
+  const engine = new ConnectFourEngine();
+  let state = engine.getInitialState();
+
+  // Build a scenario where dropping in column 2 lands at row 4,
+  // which would give the human an immediate horizontal win at row 3
+  // Bottom row (5): Player has cols 1, 3, 4
+  state = engine.applyMove(state, { col: 1 }, 'player'); // row 5, col 1
+  state = engine.applyMove(state, { col: 5 }, 'ai');     // row 5, col 5
+  state = engine.applyMove(state, { col: 3 }, 'player'); // row 5, col 3
+  state = engine.applyMove(state, { col: 5 }, 'ai');     // row 4, col 5
+  state = engine.applyMove(state, { col: 4 }, 'player'); // row 5, col 4
+
+  // AI turn: Player already has row 5 cols 1, 3, 4!
+  // Col 2 has row 5 empty! Dropping in col 2 will land in row 5,
+  // which is actually a forced block!
+  const analysis = engine.getTacticalAnalysis(state, 'ai');
+  assert.ok(analysis.opponentWinningThreats.includes(2));
+
+  // Grandmaster AI must block col 2
+  const gmMove = engine.getHeuristicMove(state, 'ai', 'grandmaster');
+  assert.equal(gmMove.col, 2);
+});
+
+test('ConnectFourEngine - grandmaster mode takes immediate win over everything else', () => {
+  const engine = new ConnectFourEngine();
+  let state = engine.getInitialState();
+
+  // AI has 3 discs stacked vertically in column 3 (rows 5, 4, 3)
+  state = engine.applyMove(state, { col: 0 }, 'player');
+  state = engine.applyMove(state, { col: 3 }, 'ai'); // row 5
+  state = engine.applyMove(state, { col: 0 }, 'player');
+  state = engine.applyMove(state, { col: 3 }, 'ai'); // row 4
+  state = engine.applyMove(state, { col: 0 }, 'player');
+  state = engine.applyMove(state, { col: 3 }, 'ai'); // row 3
+
+  // Even if player has a threat elsewhere, AI should instantly close out the win in col 3
+  const move = engine.getHeuristicMove(state, 'ai', 'grandmaster');
+  assert.equal(move.col, 3);
+});
