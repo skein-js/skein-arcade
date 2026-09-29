@@ -193,6 +193,37 @@ async function agentMoveNode(
 
     if (responseJsonText) {
       const parsed = JSON.parse(responseJsonText.trim());
+
+      // Check if model recognizes an unavoidable loss and concedes
+      if (parsed.concede === true || parsed.chosenMove === null) {
+        if (parsed.thought) {
+          thought = parsed.thought;
+        }
+        banter = parsed.banter || "I yield! You've got me completely trapped this time!";
+        mood = parsed.mood || "surprised";
+        source = `Gemini (${usedModel})`;
+
+        console.log(`🏳️  [SkeinArcade:Gemini] AI CONCEDED: "${banter}"`);
+        console.log("=======================================================\n");
+
+        const result: GameResult = {
+          isOver: true,
+          winner: "player",
+          reason: "concession",
+        };
+
+        return {
+          aiMove: null,
+          boardState: state.boardState,
+          banter,
+          thought,
+          rawThought,
+          mood,
+          source,
+          result,
+        };
+      }
+
       if (
         parsed.chosenMove &&
         engine.isValidMove(state.boardState, parsed.chosenMove, "ai")

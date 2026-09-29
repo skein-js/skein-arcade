@@ -82,8 +82,13 @@ export function buildGameRenderSpec(options: {
 
     if (result.winner === 'player') {
       status = 'player_won';
-      headline = 'VICTORY!';
-      subtext = 'Impressive moves! You defeated the Gemini Arcade AI.';
+      if (result.reason === 'concession') {
+        headline = 'AI CONCEDED! YOU WIN!';
+        subtext = 'The Gemini AI recognized your unavoidable trap and threw in the towel!';
+      } else {
+        headline = 'VICTORY!';
+        subtext = 'Impressive moves! You defeated the Gemini Arcade AI.';
+      }
     } else if (result.winner === 'ai') {
       status = 'ai_won';
       headline = 'DEFEAT!';
